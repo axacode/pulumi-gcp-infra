@@ -15,7 +15,7 @@ const spannerInstance = new gcp.spanner.Instance(spannerInstanceName, {
     displayName: spannerInstanceName,
     numNodes: 1,
     project: project,
-    deletionProtection: false,
+    forceDestroy: true,
 });
 
 // Create a Google Cloud Spanner database
