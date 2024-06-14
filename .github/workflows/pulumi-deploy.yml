@@ -54,7 +54,7 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi stack select ${{ github.repository }}/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }} || pulumi stack init ${{ github.repository }}/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
+          pulumi stack select aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }} || pulumi stack init aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
 
       - name: Set Pulumi Config
         env:
@@ -77,7 +77,7 @@ jobs:
         uses: pulumi/actions@v3
         with:
           command: up
-          stack-name: ${{ github.repository }}/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
+          stack-name: aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
           work-dir: ${{ github.event.inputs.environment || 'dev' }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
