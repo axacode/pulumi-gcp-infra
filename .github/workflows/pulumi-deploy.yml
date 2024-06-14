@@ -2,8 +2,8 @@ name: Pulumi Workflow
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches:
+      - '**'
     paths:
       - 'dev/**'
       - 'qa/**'
@@ -20,7 +20,6 @@ on:
 
 jobs:
   preview:
-    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -100,9 +99,8 @@ jobs:
 
     steps:
       - name: Await Approval
-        uses: hmarr/auto-approve-action@v2.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "Waiting for manual approval. Please approve this job to continue the deployment."
+        timeout-minutes: 60
 
       - name: Checkout repository
         uses: actions/checkout@v2
