@@ -1,4 +1,3 @@
-
 name: Destroy Pulumi Stack
 
 on:
@@ -36,20 +35,25 @@ jobs:
           cd ${{ github.event.inputs.environment }}
           npm install
 
-      - name: Set Pulumi Config
-        run: |
-          pulumi stack select ${{ github.event.inputs.environment }}
-          pulumi config set project YOUR_GCP_PROJECT_ID
-          pulumi config set region YOUR_GCP_REGION
-          pulumi config set spannerInstanceName "spanner-instance-${{ github.event.inputs.environment }}"
-          pulumi config set spannerDatabaseName "spanner-database-${{ github.event.inputs.environment }}"
-
       - name: Set up Pulumi
         uses: pulumi/actions@v3
         with:
-          command: destroy
-          stack-name: ${{ github.event.inputs.environment }}
-          work-dir: ${{ github.event.inputs.environment }}
+          command: login
+
+      - name: Initialize Pulumi Stack
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          pulumi stack select ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment }} || pulumi stack init ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment }}
+
+      - name: Set Pulumi Config
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          pulumi config set project ${{ secrets.GCP_PROJECT_ID }}
+          pulumi config set region us-east4
+          pulumi config set spannerInstanceName "spanner-instance-${{ github.event.inputs.environment }}"
+          pulumi config set spannerDatabaseName "spanner-database-${{ github.event.inputs.environment }}"
 
       - name: Set up GCP credentials
         run: echo "${{ secrets.GCP_CREDENTIALS }}" > $HOME/gcp-key.json
@@ -57,9 +61,12 @@ jobs:
       - name: Configure gcloud
         run: |
           gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
-          gcloud config set project YOUR_GCP_PROJECT_ID
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Run Pulumi Destroy
         run: |
           cd ${{ github.event.inputs.environment }}
           pulumi destroy --yes
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
