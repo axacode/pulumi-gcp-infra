@@ -69,7 +69,7 @@ jobs:
 
       - name: Set up GCP credentials
         run: |
-          echo "${{ secrets.GCP_CREDENTIALS }}" > $HOME/gcp-key.json
+          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 --decode > $HOME/gcp-key.json
 
       - name: Configure gcloud
         run: |
