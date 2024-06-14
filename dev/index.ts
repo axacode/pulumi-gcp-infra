@@ -13,7 +13,7 @@ const spannerInstance = new gcp.spanner.Instance(spannerInstanceName, {
     displayName: spannerInstanceName,
     numNodes: 1,
     project: project,
-    forceDestroy: true,
+    forceDestroy: false,
 });
 
 const spannerDatabase = new gcp.spanner.Database(spannerDatabaseName, {
