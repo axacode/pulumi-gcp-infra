@@ -68,7 +68,7 @@ jobs:
           pulumi config set spannerDatabaseName "spanner-database-${{ github.event.inputs.environment || 'dev' }}"
 
       - name: Set up GCP credentials
-        run: echo "${{ secrets.GCP_CREDENTIALS }}" > $HOME/gcp-key.json
+        run: echo "${{ secrets.GCP_CREDENTIALS }}" | base64 --decode > $HOME/gcp-key.json
 
       - name: Configure gcloud
         run: |
@@ -80,7 +80,7 @@ jobs:
         with:
           command: up
           stack-name: aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
-          work-dir: ./${{ github.event.inputs.environment || 'dev' }}
+          work-dir: ${{ github.event.inputs.environment || 'dev' }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
