@@ -49,4 +49,31 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi stack select ${{ github.repository }}.pulumi-spanner.${{ github.event.inputs.environment || 'dev' }} ||
+          pulumi stack select ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }} || pulumi stack init ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
+
+      - name: Set Pulumi Config
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          pulumi config set project ${{ secrets.GCP_PROJECT_ID }}
+          pulumi config set region us-east4
+          pulumi config set spannerInstanceName "spanner-instance-${{ github.event.inputs.environment || 'dev' }}"
+          pulumi config set spannerDatabaseName "spanner-database-${{ github.event.inputs.environment || 'dev' }}"
+
+      - name: Set up GCP credentials
+        run: echo "${{ secrets.GCP_CREDENTIALS }}" > $HOME/gcp-key.json
+
+      - name: Configure gcloud
+        run: |
+          gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Run Pulumi
+        uses: pulumi/actions@v3
+        with:
+          command: up
+          stack-name: ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
+          work-dir: ${{ github.event.inputs.environment || 'dev' }}
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
