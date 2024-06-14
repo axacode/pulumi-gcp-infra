@@ -8,7 +8,6 @@ const region = config.require("region");
 const spannerInstanceName = config.require("spannerInstanceName");
 const spannerDatabaseName = config.require("spannerDatabaseName");
 
-
 const spannerInstance = new gcp.spanner.Instance(spannerInstanceName, {
     config: `regional-${region}`,
     displayName: spannerInstanceName,
