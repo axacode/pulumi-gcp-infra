@@ -23,6 +23,6 @@ const spannerDatabase = new gcp.spanner.Database(spannerDatabaseName, {
     databaseDialect: "GOOGLE_STANDARD_SQL",
 }, { dependsOn: [spannerInstance] });
 
-// Export the instance and database names
+
 export const instanceName = spannerInstance.name;
 export const databaseName = spannerDatabase.name;
