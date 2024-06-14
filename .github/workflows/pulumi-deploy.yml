@@ -1,0 +1,92 @@
+name: Deploy Pulumi Stack
+
+on:
+  push:
+    branches:
+      - '**'   # Trigger on any branch
+    paths:
+      - 'dev/**'
+      - 'qa/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy (dev or qa)'
+        required: true
+        default: 'dev'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+      SPANNER_INSTANCE_NAME_DEV: ${{ secrets.SPANNER_INSTANCE_NAME_DEV }}
+      SPANNER_DATABASE_NAME_DEV: ${{ secrets.SPANNER_DATABASE_NAME_DEV }}
+      SPANNER_INSTANCE_NAME_QA: ${{ secrets.SPANNER_INSTANCE_NAME_QA }}
+      SPANNER_DATABASE_NAME_QA: ${{ secrets.SPANNER_DATABASE_NAME_QA }}
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install Google Cloud SDK
+        run: |
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          sudo apt-get install -y apt-transport-https ca-certificates gnupg
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+          sudo apt-get update && sudo apt-get install -y google-cloud-sdk
+
+      - name: Install dependencies
+        run: |
+          cd ${{ github.event.inputs.environment || 'dev' }}
+          npm install
+
+      - name: Set up Pulumi
+        uses: pulumi/actions@v3
+        with:
+          command: login
+
+      - name: Initialize Pulumi Stack
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          pulumi stack select ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }} || pulumi stack init ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
+
+      - name: Set Pulumi Config
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "dev" ]; then \
+            pulumi config set project ${{ secrets.GCP_PROJECT_ID }}; \
+            pulumi config set region ${{ secrets.GCP_REGION }}; \
+            pulumi config set spannerInstanceName ${{ secrets.SPANNER_INSTANCE_NAME_DEV }}; \
+            pulumi config set spannerDatabaseName ${{ secrets.SPANNER_DATABASE_NAME_DEV }}; \
+          else \
+            pulumi config set project ${{ secrets.GCP_PROJECT_ID }}; \
+            pulumi config set region ${{ secrets.GCP_REGION }}; \
+            pulumi config set spannerInstanceName ${{ secrets.SPANNER_INSTANCE_NAME_QA }}; \
+            pulumi config set spannerDatabaseName ${{ secrets.SPANNER_DATABASE_NAME_QA }}; \
+          fi
+
+      - name: Set up GCP credentials
+        run: echo "${{ secrets.GCP_CREDENTIALS }}" > $HOME/gcp-key.json
+
+      - name: Configure gcloud
+        run: |
+          gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Run Pulumi
+        run: |
+          cd ${{ github.event.inputs.environment || 'dev' }}
+          pulumi up --yes
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
