@@ -42,11 +42,13 @@ jobs:
           cd ${{ github.event.inputs.environment || 'dev' }}
           npm install
 
-      - name: Set up Pulumi
-        uses: pulumi/actions@v3
-        with:
-          command: login
-          stack-name: ${GITHUB_REPOSITORY}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
+      - name: Install Pulumi CLI
+        uses: pulumi/actions/setup-pulumi@v1
+
+      - name: Pulumi Login
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: pulumi login
 
       - name: Initialize Pulumi Stack
         env:
