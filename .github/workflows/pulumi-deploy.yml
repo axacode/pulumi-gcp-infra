@@ -1,26 +1,31 @@
-name: Deploy Pulumi Stack with Approval
+name: Pulumi Workflow
 
 on:
   push:
-    branches:
-      - '**'   # Trigger on any branch
+    branches-ignore:
+      - main
+    paths:
+      - 'dev/**'
+      - 'qa/**'
+  pull_request:
     paths:
       - 'dev/**'
       - 'qa/**'
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy (dev or qa)'
+        description: 'Environment to deploy or destroy (dev or qa)'
         required: true
         default: 'dev'
 
 jobs:
   preview:
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -86,11 +91,13 @@ jobs:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: preview
     runs-on: ubuntu-latest
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
     steps:
       - name: Await Approval
         uses: hmarr/auto-approve-action@v2.0.0
