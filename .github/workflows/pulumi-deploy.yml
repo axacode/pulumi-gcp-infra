@@ -18,6 +18,12 @@ jobs:
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+      SPANNER_INSTANCE_NAME_DEV: ${{ secrets.SPANNER_INSTANCE_NAME_DEV }}
+      SPANNER_DATABASE_NAME_DEV: ${{ secrets.SPANNER_DATABASE_NAME_DEV }}
+      SPANNER_INSTANCE_NAME_QA: ${{ secrets.SPANNER_INSTANCE_NAME_QA }}
+      SPANNER_DATABASE_NAME_QA: ${{ secrets.SPANNER_DATABASE_NAME_QA }}
       
     steps:
       - name: Checkout repository
@@ -55,10 +61,17 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi config set project ${{ secrets.GCP_PROJECT_ID }}
-          pulumi config set region us-east4
-          pulumi config set spannerInstanceName "spanner-instance-${{ github.event.inputs.environment || 'dev' }}"
-          pulumi config set spannerDatabaseName "spanner-database-${{ github.event.inputs.environment || 'dev' }}"
+          if [ "${{ github.event.inputs.environment }}" == "dev" ]; then \
+            pulumi config set project ${{ secrets.GCP_PROJECT_ID }}; \
+            pulumi config set region ${{ secrets.GCP_REGION }}; \
+            pulumi config set spannerInstanceName ${{ secrets.SPANNER_INSTANCE_NAME_DEV }}; \
+            pulumi config set spannerDatabaseName ${{ secrets.SPANNER_DATABASE_NAME_DEV }}; \
+          else \
+            pulumi config set project ${{ secrets.GCP_PROJECT_ID }}; \
+            pulumi config set region ${{ secrets.GCP_REGION }}; \
+            pulumi config set spannerInstanceName ${{ secrets.SPANNER_INSTANCE_NAME_QA }}; \
+            pulumi config set spannerDatabaseName ${{ secrets.SPANNER_DATABASE_NAME_QA }}; \
+          fi
 
       - name: Set up GCP credentials
         run: echo "${{ secrets.GCP_CREDENTIALS }}" > $HOME/gcp-key.json
