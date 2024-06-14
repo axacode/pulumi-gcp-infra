@@ -6,13 +6,14 @@ on:
       environment:
         description: 'Environment to destroy (dev or qa)'
         required: true
+        default: 'dev'
 
 jobs:
   destroy:
     runs-on: ubuntu-latest
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       
     steps:
       - name: Checkout repository
@@ -21,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '16'
 
       - name: Install Google Cloud SDK
         run: |
@@ -32,41 +33,48 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd ${{ github.event.inputs.environment }}
+          cd ${{ github.event.inputs.environment || 'dev' }}
           npm install
 
-      - name: Set up Pulumi
-        uses: pulumi/actions@v3
-        with:
-          command: login
+      - name: Install Pulumi CLI
+        uses: pulumi/setup-pulumi@v2
+
+      - name: Pulumi Login
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: pulumi login
 
       - name: Initialize Pulumi Stack
+        working-directory: ./${{ github.event.inputs.environment || 'dev' }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi stack select ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment }} || pulumi stack init ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment }}
+          pulumi stack select aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }} || pulumi stack init aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
 
       - name: Set Pulumi Config
+        working-directory: ./${{ github.event.inputs.environment || 'dev' }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
+          echo "${{ secrets.GCP_CREDENTIALS }}" | base64 --decode > $HOME/gcp-key.json
+          pulumi config set gcp:project ${{ secrets.GCP_PROJECT_ID }}
+          pulumi config set gcp:credentials "$(cat $HOME/gcp-key.json)"
           pulumi config set project ${{ secrets.GCP_PROJECT_ID }}
           pulumi config set region us-east4
-          pulumi config set spannerInstanceName "spanner-instance-${{ github.event.inputs.environment }}"
-          pulumi config set spannerDatabaseName "spanner-database-${{ github.event.inputs.environment }}"
-
-      - name: Set up GCP credentials
-        run: echo "${{ secrets.GCP_CREDENTIALS }}" > $HOME/gcp-key.json
+          pulumi config set spannerInstanceName "spanner-instance-${{ github.event.inputs.environment || 'dev' }}"
+          pulumi config set spannerDatabaseName "spanner-database-${{ github.event.inputs.environment || 'dev' }}"
 
       - name: Configure gcloud
         run: |
           gcloud auth activate-service-account --key-file=$HOME/gcp-key.json
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Run Pulumi Destroy
-        run: |
-          cd ${{ github.event.inputs.environment }}
-          pulumi destroy --yes
+      - name: Destroy Pulumi Stack
+        uses: pulumi/actions@v3
+        with:
+          command: destroy
+          stack-name: aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
+          work-dir: ${{ github.event.inputs.environment || 'dev' }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
