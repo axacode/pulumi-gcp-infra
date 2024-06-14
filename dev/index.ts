@@ -13,13 +13,14 @@ const spannerInstance = new gcp.spanner.Instance(spannerInstanceName, {
     displayName: spannerInstanceName,
     numNodes: 1,
     project: project,
-    forceDestroy: false,
+    forceDestroy: true,
 });
 
 const spannerDatabase = new gcp.spanner.Database(spannerDatabaseName, {
     instance: spannerInstance.name,
     project: project,
     databaseDialect: "GOOGLE_STANDARD_SQL",
+    deletionProtection: false
 }, { dependsOn: [spannerInstance] });
 
 export const instanceName = spannerInstance.name;
