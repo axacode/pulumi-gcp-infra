@@ -2,6 +2,8 @@ name: Deploy Pulumi Stack
 
 on:
   push:
+    branches:
+      - '**'   # Trigger on any branch
     paths:
       - 'dev/**'
       - 'qa/**'
@@ -49,7 +51,7 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi stack select ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }} || pulumi stack init ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
+          pulumi stack select ${GITHUB_REPOSITORY}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }} || pulumi stack init ${GITHUB_REPOSITORY}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
 
       - name: Set Pulumi Config
         env:
@@ -72,7 +74,7 @@ jobs:
         uses: pulumi/actions@v3
         with:
           command: up
-          stack-name: ${{ github.repository }}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
+          stack-name: ${GITHUB_REPOSITORY}/pulumi-spanner/${{ github.event.inputs.environment || 'dev' }}
           work-dir: ${{ github.event.inputs.environment || 'dev' }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
