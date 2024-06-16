@@ -50,7 +50,7 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi stack select aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }} || pulumi stack init aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
+          pulumi stack select <insertpulumiorg>/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }} || pulumi stack init <insertpulumiorg>/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
 
       - name: Set Pulumi Config
         working-directory: ./${{ github.event.inputs.environment || 'dev' }}
@@ -74,7 +74,7 @@ jobs:
         uses: pulumi/actions@v3
         with:
           command: preview
-          stack-name: aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
+          stack-name: <insertpulumiorg>/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
           work-dir: ${{ github.event.inputs.environment || 'dev' }}
           destroy: true
         env:
@@ -127,7 +127,7 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi stack select aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }} || pulumi stack init aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
+          pulumi stack select <insertpulumiorg>/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }} || pulumi stack init <insertpulumiorg>/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
 
       - name: Set Pulumi Config
         working-directory: ./${{ github.event.inputs.environment || 'dev' }}
@@ -151,7 +151,7 @@ jobs:
         uses: pulumi/actions@v3
         with:
           command: destroy
-          stack-name: aravindashok94/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
+          stack-name: <insertpulumiorg>/pulumi-gcp-infra/pulumi-spanner-${{ github.event.inputs.environment || 'dev' }}
           work-dir: ${{ github.event.inputs.environment || 'dev' }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
